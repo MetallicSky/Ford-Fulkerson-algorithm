@@ -2,13 +2,15 @@
 
 #include <string>
 #include <limits>
+#include <cstdlib>
+#include <fstream>
 #include "List.h"
 
 struct Network
 {
 	void fill(string fileName);
 
-	void newDot(string name);
+	void newNode(string name);
 
 	void newEdge(string departure, string destination, float capacity);
 
@@ -17,6 +19,7 @@ struct Network
 	bool contains(string name);
 
 	float fordFulkerson(string sourceName, string outletName);
+	float fordFulkerson(unsigned int source, unsigned int outlet);
 
 private:
 
@@ -24,22 +27,27 @@ private:
 
 	unsigned int nameToIndex(string input);
 
-	struct Edge
-	{
-		unsigned int destination;
-		float capacity;
-		float remain;
-
-		Edge(unsigned int destination = NULL, unsigned int capacity = NULL)
-		{
-			this->destination = destination;
-			this->capacity = capacity;
-			this->remain = capacity;
-		}
-	};
-
 	struct Node
 	{
+		struct Edge
+		{
+			Node* destination;
+			float capacity;
+			float remain;
+
+			Edge(Node* destination = nullptr, unsigned int capacity = NULL)
+			{
+				this->destination = destination;
+				this->capacity = capacity;
+				this->remain = capacity;
+			}
+		};
+
+		void addEdge(Edge* newEdge)
+		{
+			this->connections.push_back(newEdge);
+		};
+
 		string name;
 		List<Edge*> connections;
 
@@ -54,8 +62,7 @@ private:
 		}
 	};
 
-	List<Node*> allDots;
-	List<Edge*> allEdges;
+	List<Node*> allNodes;
 };
 
 void Network::fill(string fileName)
@@ -76,7 +83,7 @@ void Network::fill(string fileName)
 		}
 		string dot1 = tempS;
 		if (contains(dot1) == false)
-			newDot(dot1);
+			newNode(dot1);
 		tempS.clear();
 
 		file >> tempC;
@@ -87,7 +94,7 @@ void Network::fill(string fileName)
 		}
 		string dot2 = tempS;
 		if (contains(dot2) == false)
-			newDot(dot2);
+			newNode(dot2);
 		tempS.clear();
 
 		file >> tempC;
@@ -97,25 +104,28 @@ void Network::fill(string fileName)
 			file >> tempC;
 		}
 
-		float price = stof(tempS);
-		newEdge(dot1, dot2, price);
+		float weight = stof(tempS);
+		if (weight <= 0)
+			throw exception("Nevative edge weight value");
+		newEdge(dot1, dot2, weight);
 	}
 }
 
-void Network::newDot(string name)
+void Network::newNode(string name)
 {
-	for (unsigned int i = 0; i < allDots.GetSize(); ++i)
-		if (allDots[i]->name == name)
+	for (unsigned int i = 0; i < allNodes.GetSize(); ++i)
+		if (allNodes[i]->name == name)
 			throw exception("Attempt to add a new dot with the same name");
 	Node * temp = new Node(name);
-	allDots.push_back(temp);
+	allNodes.push_back(temp);
 }
 
 void Network::newEdge(unsigned int departure, unsigned int destination, float capacity)
 {
-	if (departure > allDots.GetSize() - 1 || destination > allDots.GetSize() - 1)
+	if (departure > allNodes.GetSize() - 1 || destination > allNodes.GetSize() - 1)
 		throw exception("Out of range");
-	allDots[departure]->connections.push_back(new Edge(destination, capacity));
+	Node::Edge * temp = new Node::Edge(allNodes[destination], capacity);
+	allNodes[departure]->addEdge(temp);
 }
 
 void Network::newEdge(string nameDeparture, string nameDestination, float capacity)
@@ -125,22 +135,22 @@ void Network::newEdge(string nameDeparture, string nameDestination, float capaci
 
 void Network::print()
 {
-	for (unsigned int i = 0; i < allDots.GetSize(); ++i)
+	for (unsigned int i = 0; i < allNodes.GetSize(); ++i)
 	{
-		if (allDots[i]->name != "")
-			cout << allDots[i]->name;
+		if (allNodes[i]->name != "")
+			cout << allNodes[i]->name;
 		else
 			cout << i;
 		cout << " - ";
-		for (unsigned int j = 0; j < allDots[i]->connections.GetSize(); ++j)
+		for (unsigned int j = 0; j < allNodes[i]->connections.GetSize(); ++j)
 		{
-			if (allDots[allDots[i]->connections[j]->destination]->name != "")
-				cout << allDots[allDots[i]->connections[j]->destination]->name;
+			if (allNodes[i]->connections[j]->destination->name != "")
+				cout << allNodes[i]->connections[j]->destination->name;
 			else
-				cout << allDots[i]->connections[j]->destination;
+				cout << allNodes[i]->connections[j]->destination;
 
-			cout << " (" << allDots[i]->connections[j]->capacity << ")";
-			if (j < allDots[i]->connections.GetSize() - 1)
+			cout << " (" << allNodes[i]->connections[j]->capacity << ")";
+			if (j < allNodes[i]->connections.GetSize() - 1)
 				cout << ", ";
 			else
 				cout << endl;
@@ -151,13 +161,18 @@ void Network::print()
 
 bool Network::contains(string name)
 {
-	for (unsigned int i = 0; i < allDots.GetSize(); ++i)
-		if (allDots[i]->name == name)
+	for (unsigned int i = 0; i < allNodes.GetSize(); ++i)
+		if (allNodes[i]->name == name)
 			return true;
 	return false;
 }
 
 float Network::fordFulkerson(string sourceName, string outletName)
+{
+	return fordFulkerson(nameToIndex(sourceName), nameToIndex(outletName));
+}
+
+float Network::fordFulkerson(unsigned int sourceIndex, unsigned int outletIndex)
 {
 	struct pathway
 	{
@@ -175,32 +190,31 @@ float Network::fordFulkerson(string sourceName, string outletName)
 			}
 		}
 	};
-	List<pathway*> pathways;
 
-	if (nameToIndex(sourceName) >= allDots.GetSize() || nameToIndex(outletName) >= allDots.GetSize())
+	if (sourceIndex >= allNodes.GetSize() || outletIndex >= allNodes.GetSize())
 		throw exception("Out of range");
 
-	Node * source = allDots[nameToIndex(sourceName)];
-	Node * outlet = allDots[nameToIndex(outletName)];
+	Node * source = allNodes[sourceIndex];
+	Node * outlet = allNodes[outletIndex];
+
+	List<pathway*> pathways;
 
 	source->flow = numeric_limits<float>::infinity();
 
 	Node * current = source; // step 1: set current as source
 	while (1)
 	{
-		List<Edge*> available; // step 2: get a list of traversal available edges from current
+		Node available; // step 2: get a list of traversal available edges from current
 		for (unsigned int i = 0; i < current->connections.GetSize(); ++i)
 		{
 			if (current->connections[i]->remain > 0)
-			{
-				Edge* p = current->connections[i];
-				if (allDots[p->destination]->flow == NULL)
-					available.push_back(p);
-				else
-					continue;
-			}
+				if (current->connections[i]->destination->flow == NULL)
+				{
+					Node::Edge* p = current->connections[i];
+					available.addEdge(p);
+				}
 		}
-		if (available.GetSize() == 0)
+		if (available.connections.GetSize() == 0)
 		{
 			if (current == source)
 			{
@@ -216,20 +230,19 @@ float Network::fordFulkerson(string sourceName, string outletName)
 					}
 					cout << " (" << pathways[i]->flow << ")" << endl;
 				}
+				source->flow = 0;
+
+				for (unsigned int i = 0; i < allNodes.GetSize(); ++i)
+					for (unsigned int j = 0; j < allNodes[i]->connections.GetSize(); ++j)
+						allNodes[i]->connections[j]->remain = allNodes[i]->connections[j]->capacity;
+
 				return total; // the end
 			}
 			else
 			{
-				unsigned int jamIndex; // step 4: jammed situation, get back and block this path
-				for (unsigned int i = 0; i < allDots.GetSize(); ++i)
-					if (allDots[i] == current)
-					{
-						jamIndex = i;
-						break;
-					}
-				Node* temp = current->from;
+				Node* temp = current->from; // step 4: jammed situation, get back and block this path
 				for (unsigned int i = 0; i < temp->connections.GetSize(); ++i)
-					if (temp->connections[i]->destination == jamIndex)
+					if (temp->connections[i]->destination == current)
 					{
 						temp->connections[i]->remain = 0;
 						break;
@@ -242,33 +255,32 @@ float Network::fordFulkerson(string sourceName, string outletName)
 		}
 		else
 		{
-			Edge* max = available[0];
-			for (unsigned int i = 0; i < available.GetSize(); ++i)// step 3: finding the next node to flow in
-				if (available[i]->remain > max->remain)
-					max = available[i];
+			unsigned int max = 0; // step 3: finding the next node to flow in
+			for (unsigned int i = 0; i < available.connections.GetSize(); ++i)
+				if (available.connections[i]->remain > available.connections[max]->remain)
+					max = i;
 
-			Node * next = allDots[max->destination];
+			Node * next = available.connections[max]->destination;
 			next->from = current;
-			if (current->flow > max->remain)
+			if (current->flow > available.connections[max]->remain)
 			{
-				next->flow = max->remain;
-				max->remain = 0;
+				next->flow = available.connections[max]->remain;
+				available.connections[max]->remain = 0;
 			}
 			else
 			{
 				next->flow = current->flow;
-				max->remain -= current->flow;
+				available.connections[max]->remain -= current->flow;
 			}
 
 			if (next == outlet) // step 5: reached outlet, tracking path, resetting flows, lowering remains and going back to source
 			{
 				pathways.push_back(new pathway(*next));
 				Node* p = next;
-				unsigned int pIndex = nameToIndex(outletName);
 				while (p != source) // clearing 'from' and 'flow' in Nodes, so only 'remain' in Edges adjusts
 				{
 					for (unsigned int i = 0; i < p->from->connections.GetSize(); ++i)
-						if (p->from->connections[i]->destination == pIndex)
+						if (p->from->connections[i]->destination == p)
 						{
 							p->from->connections[i]->remain += (p->flow - next->flow);
 							if (p != next)
@@ -276,12 +288,6 @@ float Network::fordFulkerson(string sourceName, string outletName)
 							Node * temp = p->from;
 							p->from = nullptr;
 							p = temp;
-							for (unsigned int i = 0; i < allDots.GetSize(); ++i)
-								if (allDots[i] == p)
-								{
-									pIndex = i;
-									break;
-								}
 							break;
 						}
 				}
@@ -298,9 +304,9 @@ unsigned int Network::nameToIndex(string input)
 {
 	unsigned int answer;
 	bool success = false;
-	for (unsigned int i = 0; i < allDots.GetSize(); ++i)
+	for (unsigned int i = 0; i < allNodes.GetSize(); ++i)
 	{
-		if (allDots[i]->name == input)
+		if (allNodes[i]->name == input)
 		{
 			answer = i;
 			success = true;
