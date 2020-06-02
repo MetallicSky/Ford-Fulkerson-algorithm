@@ -5,17 +5,17 @@ using namespace std;
 
 int main()
 {
-	Network test;
-	test.fill("input.txt");
+	Graph test;
+	test.fileRead("input.txt");
 	test.print();
-	for (unsigned int i = 0; i < 10; ++i)
+	for (unsigned int i = 0; i < 7; ++i)
 	{
 		unsigned int source = 1 + rand() % 10;
 		unsigned int outlet = 1 + rand() % 10;
 		while (outlet == source)
 			outlet = 1 + rand() % 10;
-		cout << "\n\nSource: " << source << ", outlet: " << outlet << ":" << endl;
-		float weight = test.fordFulkerson(to_string(source), to_string(outlet));
-		cout << endl << "Weight: " << weight;
+		cout << "\n\nS: " << source << ", T: " << outlet << ":" << endl;
+		float weight = test.FF(to_string(source), to_string(outlet));
+		cout << endl << "Width: " << weight;
 	}
 }

@@ -12,18 +12,18 @@ namespace UnitTest1
 
 		TEST_METHOD(newNode_contains)
 		{
-			Network test;
-			test.newNode("1");
-			test.newNode("2");
-			test.newNode("3");
-			test.newNode("4");
+			Graph test;
+			test.NewDot("1");
+			test.NewDot("2");
+			test.NewDot("3");
+			test.NewDot("4");
 			Assert::AreEqual(false, test.contains("6"));
 			Assert::AreEqual(true, test.contains("3"));
-			test.newNode("6");
+			test.NewDot("6");
 			Assert::AreEqual(true, test.contains("6"));
 			try
 			{
-				test.newNode("3");
+				test.NewDot("3");
 			}
 			catch (const std::exception & ex)
 			{
@@ -33,19 +33,19 @@ namespace UnitTest1
 
 		TEST_METHOD(newEdge_fordFulkerson)
 		{
-			Network test;
-			test.newNode("1");
-			test.newNode("2");
-			test.newNode("3");
-			test.newNode("4");
+			Graph test;
+			test.NewDot("1");
+			test.NewDot("2");
+			test.NewDot("3");
+			test.NewDot("4");
 			float compare = 0;
-			Assert::AreEqual(compare, test.fordFulkerson(0, 1));
+			Assert::AreEqual(compare, test.FF(0, 1));
 			test.newEdge("1", "2", 5);
 			compare = 5;
-			Assert::AreEqual(compare, test.fordFulkerson(0, 1));
+			Assert::AreEqual(compare, test.FF(0, 1));
 			try
 			{
-				test.fordFulkerson(10, 1);
+				test.FF(10, 1);
 			}
 			catch (const std::exception & ex)
 			{
@@ -56,12 +56,12 @@ namespace UnitTest1
 			test.newEdge("2", "3", 90);
 			test.newEdge("3", "4", 100);
 			compare = 15;
-			Assert::AreEqual(compare, test.fordFulkerson(0, 1));
+			Assert::AreEqual(compare, test.FF(0, 1));
 			compare = 20;
-			Assert::AreEqual(compare, test.fordFulkerson(2, 1));
+			Assert::AreEqual(compare, test.FF(2, 1));
 			try
 			{
-				test.fordFulkerson("5", "1");
+				test.FF("5", "1");
 			}
 			catch (const std::exception & ex)
 			{
