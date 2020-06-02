@@ -1,5 +1,5 @@
 #include <iostream>
-#include "Network.h"
+#include "Graph.h"
 
 using namespace std;
 
