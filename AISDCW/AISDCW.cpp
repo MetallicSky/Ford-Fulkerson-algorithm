@@ -6,7 +6,7 @@ using namespace std;
 int main()
 {
 	Network test;
-	test.read("input.txt");
+	test.read("1;2;3\n1;8;3\n2;3;4");
 	test.print();
 	int maxWeight;
 	cout << "S = 5, T = 3:" << endl;
