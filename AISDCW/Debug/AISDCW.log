@@ -1,0 +1,7 @@
+﻿  AISDCW.cpp
+C:\Users\user\source\repos\AISDCW\AISDCW\Network.h(36): warning C4244: =: преобразование "unsigned int" в "float", возможна потеря данных
+C:\Users\user\source\repos\AISDCW\AISDCW\Network.h(37): warning C4244: =: преобразование "unsigned int" в "float", возможна потеря данных
+C:\Users\user\source\repos\AISDCW\AISDCW\Network.h(118): warning C4244: аргумент: преобразование "float" в "unsigned int", возможна потеря данных
+C:\Users\user\source\repos\AISDCW\AISDCW\List.h(211): warning C4715: List<Network::Node *>::operator[]: значение возвращается не при всех путях выполнения
+C:\Users\user\source\repos\AISDCW\AISDCW\List.h(211): warning C4715: List<Network::Edge *>::operator[]: значение возвращается не при всех путях выполнения
+  AISDCW.vcxproj -> C:\Users\user\source\repos\AISDCW\Debug\AISDCW.exe

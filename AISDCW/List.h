@@ -140,8 +140,8 @@ void List<T>::insert(T data, int index)
 			previous = previous->pNext;
 			nex = nex->pNext;
 		}
-		Node<T>* newNode = new Node<T>(data, previous->pNext);
-		previous->pNext = newNode;
+		Node<T>* addNode = new Node<T>(data, previous->pNext);
+		previous->pNext = addNode;
 
 		nex = nex->pNext;
 		nex->pPrevious = previous;
